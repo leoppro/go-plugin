@@ -64,16 +64,11 @@ run_hashicorp_plugin:
 hashicorp_plugin:
 	$(GOBUILD) -o ./hashicorp_plugin/host/plugin ./hashicorp_plugin/plugin/sink.go
 
+run_lua_plugin:
+	$(GO) run -trimpath ./lua/main.go ./lua/plugin.lua
+
 install:
 	go install ./...
-
-unit_test: check_failpoint_ctl
-	mkdir -p "$(TEST_DIR)"
-	$(FAILPOINT_ENABLE)
-	@export log_level=error;\
-	$(GOTEST) -cover -covermode=atomic -coverprofile="$(TEST_DIR)/cov.unit.out" $(PACKAGES) \
-	|| { $(FAILPOINT_DISABLE); exit 1; }
-	$(FAILPOINT_DISABLE)
 
 fmt:
 	@echo "gofmt (simplify)"
