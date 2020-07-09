@@ -14,9 +14,18 @@ message PutRequest {
     bytes value = 2;
 }
 
+
+message RowChangedEvent {
+    uint64 start_ts = 1;
+    uint64 commit_ts = 2;
+    string table_name = 3;
+    bytes value = 4;
+}
+
 message Empty {}
 
 service KV {
     rpc Get(GetRequest) returns (GetResponse);
+    rpc EmitRow(RowChangedEvent) returns (Empty);
     rpc Put(PutRequest) returns (Empty);
 }

@@ -8,7 +8,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/go-plugin/examples/grpc/proto"
+	"github.com/leoppro/go-plugin-demo/hashicorp_plugin_grpc/proto"
+	"github.com/leoppro/go-plugin-demo/pkg/sink"
 )
 
 // Handshake is a common handshake that is shared by plugin and host.
@@ -29,6 +30,7 @@ var PluginMap = map[string]plugin.Plugin{
 type KV interface {
 	Put(key string, value []byte) error
 	Get(key string) ([]byte, error)
+	EmitRow(row *sink.RowChangedEvent) error
 }
 
 // This is the implementation of plugin.Plugin so we can serve/consume this.

@@ -64,6 +64,12 @@ run_hashicorp_plugin:
 hashicorp_plugin:
 	$(GOBUILD) -o ./hashicorp_plugin/host/plugin ./hashicorp_plugin/plugin/sink.go
 
+run_hashicorp_grpc_plugin:
+	$(GO) run -trimpath ./hashicorp_plugin_grpc/main.go ./hashicorp_plugin_grpc/plugin
+
+hashicorp_grpc_plugin:
+	$(GOBUILD) -o ./hashicorp_plugin_grpc/plugin ./hashicorp_plugin_grpc/plugin-go-grpc/main.go
+
 run_lua_plugin:
 	$(GO) run -trimpath ./lua/main.go ./lua/plugin.lua
 

@@ -5,7 +5,8 @@ import (
 	"io/ioutil"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/go-plugin/examples/grpc/shared"
+	"github.com/leoppro/go-plugin-demo/hashicorp_plugin_grpc/shared"
+	"github.com/leoppro/go-plugin-demo/pkg/sink"
 )
 
 // Here is a real implementation of KV that writes to a local file with
@@ -19,6 +20,10 @@ func (KV) Put(key string, value []byte) error {
 
 func (KV) Get(key string) ([]byte, error) {
 	return ioutil.ReadFile("kv_" + key)
+}
+
+func (KV) EmitRow(row *sink.RowChangedEvent) error {
+	return nil
 }
 
 func main() {

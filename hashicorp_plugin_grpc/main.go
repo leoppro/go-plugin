@@ -2,24 +2,29 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/go-plugin/examples/grpc/shared"
+	"github.com/leoppro/go-plugin-demo/hashicorp_plugin_grpc/shared"
+	"github.com/leoppro/go-plugin-demo/pkg/sink"
+	"github.com/pingcap/log"
+	"go.uber.org/zap"
 )
 
 func main() {
 	// We don't want to see the plugin logs.
-	log.SetOutput(ioutil.Discard)
 
+	pluginPath := "./plugin"
+	if len(os.Args) >= 2 {
+		pluginPath = os.Args[1]
+	}
 	// We're a host. Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.Handshake,
 		Plugins:         shared.PluginMap,
-		Cmd:             exec.Command("sh", "-c", os.Getenv("KV_PLUGIN")),
+		Cmd:             exec.Command(pluginPath),
 		AllowedProtocols: []plugin.Protocol{
 			plugin.ProtocolNetRPC, plugin.ProtocolGRPC},
 	})
@@ -42,27 +47,31 @@ func main() {
 	// We should have a KV store now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
 	kv := raw.(shared.KV)
-	os.Args = os.Args[1:]
-	switch os.Args[0] {
-	case "get":
-		result, err := kv.Get(os.Args[1])
-		if err != nil {
-			fmt.Println("Error:", err.Error())
-			os.Exit(1)
-		}
+	kv.Put("aa", []byte("bb"))
+	v, err := kv.Get("aa")
+	fmt.Printf("%s %#v", v, err)
 
-		fmt.Println(string(result))
+	kv.EmitRow(&sink.RowChangedEvent{StartTs: 1111, Table: &sink.TableName{Table: "123"}})
 
-	case "put":
-		err := kv.Put(os.Args[1], []byte(os.Args[2]))
-		if err != nil {
-			fmt.Println("Error:", err.Error())
-			os.Exit(1)
-		}
+	log.Info("run benckmark =================")
+	benckmark(kv)
+	log.Info("finished benckmark ============")
+}
 
-	default:
-		fmt.Printf("Please only use 'get' or 'put', given: %q", os.Args[0])
-		os.Exit(1)
+func benckmark(s shared.KV) {
+	startTime := time.Now()
+	for i := int64(0); i < 50_000; i++ {
+		s.EmitRow(newRow(i))
 	}
-	os.Exit(0)
+	log.Info("-", zap.Duration("cost", time.Since(startTime)), zap.Duration("op", time.Since(startTime)/50_000))
+}
+
+func newRow(mark int64) *sink.RowChangedEvent {
+	return &sink.RowChangedEvent{
+		RowID:   mark,
+		StartTs: uint64(mark),
+		Table: &sink.TableName{
+			Table: "123",
+		},
+	}
 }

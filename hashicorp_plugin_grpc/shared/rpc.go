@@ -2,6 +2,8 @@ package shared
 
 import (
 	"net/rpc"
+
+	"github.com/leoppro/go-plugin-demo/pkg/sink"
 )
 
 // RPCClient is an implementation of KV that talks over RPC.
@@ -24,6 +26,12 @@ func (m *RPCClient) Get(key string) ([]byte, error) {
 	return resp, err
 }
 
+func (m *RPCClient) EmitRow(row *sink.RowChangedEvent) error {
+	var resp interface{}
+	err := m.client.Call("Plugin.EmitRow", row, &resp)
+	return err
+}
+
 // Here is the RPC server that RPCClient talks to, conforming to
 // the requirements of net/rpc
 type RPCServer struct {
@@ -39,4 +47,8 @@ func (m *RPCServer) Get(key string, resp *[]byte) error {
 	v, err := m.Impl.Get(key)
 	*resp = v
 	return err
+}
+
+func (m *RPCServer) EmitRow(row *sink.RowChangedEvent) error {
+	return m.Impl.EmitRow(row)
 }
